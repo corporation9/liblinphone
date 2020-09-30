@@ -586,6 +586,15 @@ void linphone_core_cbs_set_chat_room_exhumed(LinphoneCoreCbs *cbs, LinphoneCoreC
 	cbs->vtable->chat_room_exhumed = cb;
 }
 
+LinphoneCoreCbsAccountRegistrationStateChangedCb linphone_core_cbs_get_account_registration_state_changed(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->account_registration_state_changed;
+}
+
+void linphone_core_cbs_set_account_registration_state_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsAccountRegistrationStateChangedCb cb) {
+	cbs->vtable->account_registration_state_changed = cb;
+}
+
+
 void lc_callback_obj_init(LCCallbackObj *obj,LinphoneCoreCbFunc func,void* ud) {
 	obj->_func=func;
 	obj->_user_data=ud;
