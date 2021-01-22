@@ -33,11 +33,21 @@ extern "C" {
 
 /**
  * Create a new #LinphoneAccount.
- * @param lc The #LinphoneCore object. @notnil
+ * @param lc The #LinphoneCore object. @maybenil
  * @param params The #LinphoneAccountParams object. @notnil
  * @return The newly created #LinphoneAccount object. @notnil
  */
 LINPHONE_PUBLIC LinphoneAccount* linphone_account_new(LinphoneCore *lc, LinphoneAccountParams *params);
+
+/**
+ * Create a new #LinphoneAccount with a Proxy config backpointer.
+ * This is only intended to be used while keeping a backward compatibility with proxy config.
+ * @param lc The #LinphoneCore object. @maybenil
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param config The #LinphoneProxyConfig object. @maybenil
+ * @return The newly created #LinphoneAccount object. @notnil
+ */
+LINPHONE_PUBLIC LinphoneAccount* linphone_account_new_with_config(LinphoneCore *lc, LinphoneAccountParams *params, LinphoneProxyConfig *config);
 
 /**
  * Instantiate a new account with values from source.
@@ -64,14 +74,14 @@ LINPHONE_PUBLIC void linphone_account_unref(LinphoneAccount *account);
  * @param account The #LinphoneAccount object. @notnil
  * @param params The #LinphoneAccountParams object. @notnil
  */
-LINPHONE_PUBLIC void linphone_account_set_params(LinphoneAccount *account, LinphoneAccountParams* params);
+LINPHONE_PUBLIC int linphone_account_set_params(LinphoneAccount *account, LinphoneAccountParams* params);
 
 /**
  * Get the #LinphoneAccountParams.
  * @param account The #LinphoneAccount object. @notnil
  * @return The #LinphoneAccountParams attached to this account. @notnil
  */
-LINPHONE_PUBLIC LinphoneAccountParams* linphone_account_get_params(LinphoneAccount *account);
+LINPHONE_PUBLIC const LinphoneAccountParams* linphone_account_get_params(LinphoneAccount *account);
 
 /**
  * Assign a user pointer to the account.

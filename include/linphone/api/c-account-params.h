@@ -34,7 +34,7 @@ extern "C" {
 
 /**
  * Create a new #LinphoneAccountParams object.
- * @param lc The #LinphoneCore object. @notnil
+ * @param lc The #LinphoneCore object. @maybenil
  * @return The newly created #LinphoneAccountParams object. @notnil
  */
 LINPHONE_PUBLIC LinphoneAccountParams* linphone_account_params_new(LinphoneCore *lc);
@@ -79,7 +79,7 @@ LINPHONE_PUBLIC void linphone_account_params_set_user_data(LinphoneAccountParams
  * @param params The #LinphoneAccountParams object. @notnil
  * @return The user data. @maybenil
  */
-LINPHONE_PUBLIC void* linphone_account_params_get_user_data(LinphoneAccountParams *params);
+LINPHONE_PUBLIC void* linphone_account_params_get_user_data(const LinphoneAccountParams *params);
 
 /**
  * Sets the proxy address
@@ -88,8 +88,10 @@ LINPHONE_PUBLIC void* linphone_account_params_get_user_data(LinphoneAccountParam
  * - IP address: sip:87.98.157.38
  * - IP address with port: sip:87.98.157.38:5062
  * - hostnames : sip:sip.example.net
+ * 
  * @param params The #LinphoneAccountParams object. @notnil
  * @param server_address The proxy address to set. @maybenil
+ * @return 0 if successful, -1 otherwise.
 **/
 LINPHONE_PUBLIC LinphoneStatus linphone_account_params_set_server_addr(LinphoneAccountParams *params, const char *server_address);
 
@@ -101,20 +103,10 @@ LINPHONE_PUBLIC LinphoneStatus linphone_account_params_set_server_addr(LinphoneA
  * Alice <sip:alice@example.net>
  * The REGISTER messages will have from and to set to this identity.
  * @param params The #LinphoneAccountParams object. @notnil
- * @param identity The #LinphoneAddress of the identity to set. @notnil
+ * @param identity The #LinphoneAddress of the identity to set. @maybenil
+ * @return 0 if successful, -1 otherwise.
 **/
 LINPHONE_PUBLIC LinphoneStatus linphone_account_params_set_identity_address(LinphoneAccountParams *params, const LinphoneAddress *identity);
-
-/**
- * Sets a list of SIP route.
- * When a route is set, all outgoing calls will go to the route's destination if this account
- * is the default one (see linphone_core_set_default_account() ).
- * @param params The #LinphoneAccountParams object. @notnil
- * @param routes A \bctbx_list{const char *} of routes. @maybenil
- * @return -1 if routes are invalid, 0 otherwise.
- * @deprecated 29/09/2020 use linphone_account_params_set_routes_addresses() instead.
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_account_params_set_routes(LinphoneAccountParams *params, const bctbx_list_t *routes);
 
 /**
  * Sets a list of SIP route.
@@ -172,13 +164,20 @@ LINPHONE_PUBLIC int linphone_account_params_get_publish_expires(const LinphoneAc
 LINPHONE_PUBLIC void linphone_account_params_set_dial_escape_plus_enabled(LinphoneAccountParams *params, bool_t enable);
 
 /**
- * Set a dialing prefix to be automatically prepended when inviting a number with
+ * Set an international prefix to be automatically prepended when inviting a number with
  * linphone_core_invite();
- * This dialing prefix shall usually be the country code of the country where the user is living, without "+".
+ * This international prefix shall usually be the country code of the country where the user is living, without "+".
  * @param params The #LinphoneAccountParams object. @notnil
- * @param prefix The prefix to set (withouth the +).
+ * @param prefix The prefix to set (withouth the +). @maybenil
 **/
-LINPHONE_PUBLIC void linphone_account_params_set_dial_prefix(LinphoneAccountParams *params, const char *prefix);
+LINPHONE_PUBLIC void linphone_account_params_set_international_prefix(LinphoneAccountParams *params, const char *prefix);
+
+/**
+ * If enabled, the international prefix will automaticaly be used for calls.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param enable TRUE to use the international prefix for calls, FALSE otherwise.
+ */
+LINPHONE_PUBLIC void linphone_account_params_set_use_international_prefix_for_calls(LinphoneAccountParams* params, bool_t enable);
 
  /**
  * Indicates whether quality statistics during call should be stored and sent to a collector according to RFC 6035.
@@ -192,7 +191,7 @@ LINPHONE_PUBLIC void linphone_account_params_set_quality_reporting_enabled(Linph
  * @param params The #LinphoneAccountParams object. @notnil
  * @return True if quality repotring is enabled, false otherwise.
  */
-LINPHONE_PUBLIC bool_t linphone_account_params_get_quality_reporting_enabled(LinphoneAccountParams *params);
+LINPHONE_PUBLIC bool_t linphone_account_params_get_quality_reporting_enabled(const LinphoneAccountParams *params);
 
  /**
  * Set the route of the collector end-point when using quality reporting. This SIP address
@@ -228,7 +227,7 @@ LINPHONE_PUBLIC void linphone_account_params_set_quality_reporting_interval(Linp
  * @param params The #LinphoneAccountParams object. @notnil
  * @return The interval in seconds, 0 means interval reports are disabled.
  */
-LINPHONE_PUBLIC int linphone_account_params_get_quality_reporting_interval(LinphoneAccountParams *params);
+LINPHONE_PUBLIC int linphone_account_params_get_quality_reporting_interval(const LinphoneAccountParams *params);
 
 /**
  * Get the domain name of the given account params.
@@ -253,14 +252,6 @@ LINPHONE_PUBLIC void linphone_account_params_set_realm(LinphoneAccountParams *pa
 
 /**
  * Gets the list of the routes set for this account params.
- * @param params The #LinphoneAccountParams object. @notnil
- * @return \bctbx_list{const char *} The list of routes. @maybenil
- * @deprecated 29/09/2020 use linphone_account_params_get_routes_addresses() instead.
- */
-LINPHONE_PUBLIC const bctbx_list_t* linphone_account_params_get_routes(const LinphoneAccountParams *params);
-
-/**
- * Gets the list of the routes set for this account params.
  * 
  * @warning If linphone_account_params_is_outbound_proxy_enabled is TRUE then it will only return the proxy address.
  * @param params The #LinphoneAccountParams object. @notnil
@@ -274,6 +265,13 @@ LINPHONE_PUBLIC const bctbx_list_t* linphone_account_params_get_routes_addresses
  * @return The SIP identity that belongs to this account params. @maybenil
 **/
 LINPHONE_PUBLIC const LinphoneAddress *linphone_account_params_get_identity_address(const LinphoneAccountParams *params);
+
+/**
+ * Get the identity of the account params.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return The SIP identity that belongs to this account params. @maybenil
+**/
+LINPHONE_PUBLIC const char *linphone_account_params_get_identity(const LinphoneAccountParams *params);
 
 /**
  * Tell if the PUBLISH is enabled.
@@ -347,9 +345,16 @@ LINPHONE_PUBLIC bool_t linphone_account_params_get_dial_escape_plus_enabled(cons
 /**
  * Get the prefix set for this account params.
  * @param params The #LinphoneAccountParams object. @notnil
- * @return The dialing prefix. @maybenil
+ * @return The international prefix. @maybenil
 **/
-LINPHONE_PUBLIC	const char * linphone_account_params_get_dial_prefix(const LinphoneAccountParams *params);
+LINPHONE_PUBLIC	const char * linphone_account_params_get_international_prefix(const LinphoneAccountParams *params);
+
+/**
+ * Return whether or not the international prefix will automaticaly be used for calls.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return Whether we should use international prefix automaticaly for calls.
+ */
+LINPHONE_PUBLIC bool_t linphone_account_params_get_use_international_prefix_for_calls(const LinphoneAccountParams *params);
 
 /**
  * Set default privacy policy for all calls routed through this proxy.
@@ -439,12 +444,11 @@ LINPHONE_PUBLIC void linphone_account_params_set_ref_key(LinphoneAccountParams *
  * @param params The #LinphoneAccountParams object. @notnil
  * @return The idkey string, or NULL. @maybenil
  **/
-LINPHONE_PUBLIC const char *linphone_account_params_get_idkey(LinphoneAccountParams *params);
+LINPHONE_PUBLIC const char *linphone_account_params_get_idkey(const LinphoneAccountParams *params);
 
 /**
  * Set the idkey property on the given account params.
  * This property can the be referenced by another account params 'depends_on' to create a dependency relation between them.
- * @see linphone_account_params_set_depends_on()
  *
  * @param params The #LinphoneAccountParams object. @notnil
  * @param idkey The idkey string to associate to the given #LinphoneAccountParams. @maybenil
@@ -488,7 +492,7 @@ LINPHONE_PUBLIC void linphone_account_params_set_outbound_proxy_enabled(Linphone
  * @param params The #LinphoneAccountParams object. @notnil
  * @return enable TRUE if enabled, FALSE otherwise.
  */
-LINPHONE_PUBLIC bool_t linphone_account_params_get_outbound_proxy_enabled(LinphoneAccountParams *params);
+LINPHONE_PUBLIC bool_t linphone_account_params_get_outbound_proxy_enabled(const LinphoneAccountParams *params);
 
 /**
  * Get the conference factory uri.

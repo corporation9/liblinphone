@@ -38,9 +38,6 @@ public:
 	~AccountParams ();
 
 	AccountParams* clone () const override;
-	AccountParams& operator= (const AccountParams &other);
-
-	void init (LinphoneCore *lc);
 
 	// Setters
 	void setExpires (int expires);
@@ -53,8 +50,9 @@ public:
 	void setPublishEnabled (bool enable);
 	void setOutboundProxyEnabled (bool enable);
 	void setPushNotificationAllowed (bool allow);
+	void setUseInternationalPrefixForCalls (bool enable);
 	void setUserData (void *userData);
-	void setDialPrefix (const std::string &dialPrefix);
+	void setInternationalPrefix (const std::string &internationalPrefix);
 	void setProxy (const std::string &proxy);
 	void setRealm (const std::string &realm);
 	void setQualityReportingCollector (const std::string &qualityReportingCollector);
@@ -65,11 +63,12 @@ public:
 	void setIdKey (const std::string &idKey);
 	void setConferenceFactoryUri (const std::string &conferenceFactoryUri);
 	void setFileTranferServer (const std::string &fileTransferServer);
-	void setRoutes (const std::list<LinphoneAddress *> &routes);
 	void setPrivacy (LinphonePrivacyMask privacy);
-	void setIdentityAddress (LinphoneAddress* identityAddress);
 	void setAvpfMode (LinphoneAVPFMode avpfMode);
 	void setNatPolicy (LinphoneNatPolicy *natPolicy);
+	LinphoneStatus setIdentityAddress (const LinphoneAddress* identityAddress);
+	LinphoneStatus setRoutes (const bctbx_list_t *routes);
+	LinphoneStatus setRoutesFromStringList (const bctbx_list_t *routes);
 
 	// Getters
 	int getExpires () const;
@@ -82,9 +81,9 @@ public:
 	bool getPublishEnabled () const;
 	bool getOutboundProxyEnabled () const;
 	bool getPushNotificationAllowed () const;
+	bool getUseInternationalPrefixForCalls () const;
 	void* getUserData () const;
-	const std::string& getDialPrefix () const;
-	const std::string& getDomain () const;
+	const std::string& getInternationalPrefix () const;
 	const std::string& getProxy () const;
 	const std::string& getRealm () const;
 	const std::string& getQualityReportingCollector () const;
@@ -95,14 +94,19 @@ public:
 	const std::string& getIdKey () const;
 	const std::string& getConferenceFactoryUri () const;
 	const std::string& getFileTransferServer () const;
-	const std::list<LinphoneAddress *>& getRoutes () const;
+	const std::string& getIdentity () const;
+	const char* getDomain () const;
+	const bctbx_list_t* getRoutes () const;
+	const bctbx_list_t* getRoutesString () const;
 	LinphonePrivacyMask getPrivacy () const;
 	LinphoneAddress* getIdentityAddress () const;
 	LinphoneAVPFMode getAvpfMode () const;
 	LinphoneNatPolicy* getNatPolicy () const;
 
 	// Other
-	LinphoneStatus setServerAddr (const std::string &addr);
+	LinphoneStatus setServerAddr (const std::string &serverAddr);
+	const std::string& getServerAddr () const;
+	void writeToConfigFile (LinphoneConfig *config, int index);
 
 private:
 	int mExpires;
@@ -112,16 +116,16 @@ private:
 	uint8_t mAvpfRrInterval;
 
 	bool mRegisterEnabled;
-	bool mRegisterChanged = false;
 	bool mDialEscapePlusEnabled;
 	bool mQualityReportingEnabled;
 	bool mPublishEnabled;
 	bool mOutboundProxyEnabled;
 	bool mPushNotificationAllowed;
+	bool mUseInternationalPrefixForCalls;
 
 	void *mUserData;
 
-	std::string mDialPrefix;
+	std::string mInternationalPrefix;
 	std::string mProxy;
 	std::string mRealm;
 	std::string mQualityReportingCollector;
@@ -132,16 +136,18 @@ private:
 	std::string mIdKey;
 	std::string mConferenceFactoryUri;
 	std::string mFileTransferServer;
+	std::string mIdentity;
 
-	std::list<LinphoneAddress *> mRoutes;
+	bctbx_list_t *mRoutes;
+	bctbx_list_t *mRoutesString;
 
 	LinphonePrivacyMask mPrivacy;
 
-	LinphoneAddress *mIdentityAddress;
+	LinphoneAddress *mIdentityAddress = nullptr;
 
 	LinphoneAVPFMode mAvpfMode;
 
-	LinphoneNatPolicy *mNatPolicy;
+	LinphoneNatPolicy *mNatPolicy = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

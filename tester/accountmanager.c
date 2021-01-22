@@ -353,6 +353,7 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 static LinphoneAddress *account_manager_check_account(AccountManager *m, LinphoneProxyConfig *cfg, LinphoneCoreManager *cm){
 	LinphoneCore *lc = linphone_proxy_config_get_core(cfg);
 	const char *identity = linphone_proxy_config_get_identity(cfg);
+	ms_message("CHECK_ACCOUNT: %s", identity ? identity : "NULL");
 	LinphoneAddress *id_addr = linphone_address_new(identity);
 	Account *account = account_manager_get_account(m, id_addr);
 	LinphoneAuthInfo *ai;

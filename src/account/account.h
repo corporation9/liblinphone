@@ -27,67 +27,88 @@
 #include "account-params.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "linphone/api/c-types.h"
-#include "linphone/sipsetup.h"
 #include "sal/register-op.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
+typedef enum _LinphoneAccountAddressComparisonResult {
+	LinphoneAccountAddressDifferent,
+	LinphoneAccountAddressEqual,
+	LinphoneAccountAddressWeakEqual
+} LinphoneAccountAddressComparisonResult;
+
 class Account : public bellesip::HybridObject<LinphoneAccount, Account> {
 public:
-	Account (LinphoneCore *lc, std::shared_ptr<AccountParams> &params);
+	Account (LinphoneCore *lc, std::shared_ptr<AccountParams> params);
+	Account (LinphoneCore *lc, std::shared_ptr<AccountParams> params, LinphoneProxyConfig *config);
 	Account (const Account &other);
 	~Account ();
 
 	Account* clone () const override;
-	Account& operator= (const Account &other);
 
 	// Account params configuration
-	void setAccountParams (std::shared_ptr<AccountParams> &params);
-	std::shared_ptr<AccountParams>& getAccountParams ();
+	LinphoneStatus setAccountParams (std::shared_ptr<AccountParams> params);
+	std::shared_ptr<const AccountParams> getAccountParams () const;
 
 	// Setters
 	void setAuthFailure (int authFailure);
 	void setRegisterChanged (bool registerChanged);
+	void setSendPublish (bool sendPublish);
+	void setNeedToRegister (bool needToRegister);
 	void setDeletionDate (time_t deletionDate);
+	void setSipEtag (const std::string& sipEtag);
 	void setUserData (void *userData);
+	void setCore (LinphoneCore *lc);
 	void setErrorInfo (LinphoneErrorInfo *errorInfo);
 	void setContactAddress (LinphoneAddress *contact);
 	void setContactAddressWithoutParams (LinphoneAddress *contact);
 	void setPendingContactAddress (LinphoneAddress *contact);
 	void setServiceRouteAddress (LinphoneAddress *serviceRoute);
-	void setState (LinphoneRegistrationState state);
+	void setState (LinphoneRegistrationState state, const std::string& message);
 	void setOp (SalRegisterOp *op);
 	void setCustomheader (const std::string& headerName, const std::string& headerValue);
 	void setPresencePublishEvent (LinphoneEvent *presencePublishEvent);
-	void setDependency (std::shared_ptr<Account> &dependency);
+	void setDependency (std::shared_ptr<Account> dependency);
 
 	// Getters
 	int getAuthFailure () const;
-	bool hasRegisterChanged () const;
+	bool getRegisterChanged () const;
 	time_t getDeletionDate () const;
+	const std::string& getSipEtag () const;
 	void* getUserData () const;
 	LinphoneCore* getCore () const;
-	LinphoneErrorInfo* getErrorInfo () const;
+	LinphoneErrorInfo* getErrorInfo ();
 	LinphoneAddress* getContactAddress () const;
 	LinphoneAddress* getContactAddressWithoutParams () const;
 	LinphoneAddress* getPendingContactAddress () const;
-	LinphoneAddress* getServiceRouteAddress () const;
+	LinphoneAddress* getServiceRouteAddress ();
 	LinphoneRegistrationState getState () const;
 	SalRegisterOp* getOp() const;
-	const std::string getCustomHeader (const std::string& headerName) const;
+	const char* getCustomHeader (const std::string& headerName) const;
 	LinphoneEvent* getPresencePublishEvent () const;
-	std::shared_ptr<Account>& getDependency ();
+	std::shared_ptr<Account> getDependency ();
 
 	// Other
 	void refreshRegister ();
 	void pauseRegister ();
-	LinphoneReason getError () const;
-	const std::string getTransport () const;
-	bool avpfEnabled () const;
+	void stopRefreshing ();
+	void registerAccount ();
+	void unregister ();
+	LinphoneReason getError ();
+	LinphoneTransportType getTransport ();
+	bool isAvpfEnabled () const;
 	const LinphoneAuthInfo* findAuthInfo () const;
 	int getUnreadChatMessageCount () const;
+	void writeToConfigFile (int index);
+	void update ();
+	void apply ();
+	LinphoneEvent *createPublish (const char *event, int expires);
+	int sendPublish (LinphonePresenceModel *presence);
+	void unpublish ();
+	void notifyPublishStateChanged (LinphonePublishState state);
+	bool check ();
 
 	// Callbacks
 	void addCallbacks (LinphoneAccountCbs *callbacks);
@@ -95,39 +116,70 @@ public:
 	void setCurrentCallbacks (LinphoneAccountCbs *callbacks);
 	LinphoneAccountCbs* getCurrentCallbacks () const;
 
-	const std::list<LinphoneAccountCbs *>& getCallbacksList () const;
+	const bctbx_list_t* getCallbacksList () const;
+
+	// Listener
+	void onPushNotificationAllowedChanged (bool allow);
+	void onInternationalPrefixChanged ();
+	void onConferenceFactoryUriChanged (const std::string &conferenceFactoryUri);
+	void onNatPolicyChanged (LinphoneNatPolicy *policy);
+
+	// To be removed when not using proxy config anymore
+	LinphoneProxyConfig *getConfig () const;
+	void setConfig (LinphoneProxyConfig *config);
+	LinphoneAccountAddressComparisonResult isServerConfigChanged ();
 
 private:
+	bool computePublishParamsHash();
+	LinphoneAccountAddressComparisonResult isServerConfigChanged (std::shared_ptr<AccountParams> oldParams, std::shared_ptr<AccountParams> newParams);
+	bool canRegister ();
+	LinphoneAddress *guessContactForRegister ();
+	void updateDependentAccount(LinphoneRegistrationState state, const std::string &message);
+	int done ();
+	void resolveDependencies ();
+
 	std::shared_ptr<AccountParams> mParams;
 
 	int mAuthFailure;
 
-	bool mRegisterChanged;
+	bool mNeedToRegister = false;
+	bool mRegisterChanged = false;
+	bool mSendPublish = false;
 
 	time_t mDeletionDate;
 
+	std::string mSipEtag;
+
 	void *mUserData;
 
-	LinphoneCore *mCore;
+	LinphoneCore *mCore = nullptr;
 
-	LinphoneErrorInfo *mErrorInfo;
+	LinphoneErrorInfo *mErrorInfo = nullptr;
 
-	LinphoneAddress *mContactAddress;
-	LinphoneAddress *mContactAddressWithoutParams;
-	LinphoneAddress *mPendingContactAddress;
-	LinphoneAddress *mServiceRouteAddress;
+	LinphoneAddress *mContactAddress = nullptr;
+	LinphoneAddress *mContactAddressWithoutParams = nullptr;
+	LinphoneAddress *mPendingContactAddress = nullptr;
+	LinphoneAddress *mServiceRouteAddress = nullptr;
 
-	LinphoneRegistrationState mState;
+	LinphoneRegistrationState mState = LinphoneRegistrationNone;
 
-	SalRegisterOp *mOp;
-	SalCustomHeader *mSentHeaders;
+	SalRegisterOp *mOp = nullptr;
+	SalCustomHeader *mSentHeaders = nullptr;
 
-	LinphoneEvent *mPresencePublishEvent;
+	LinphoneEvent *mPresencePublishEvent = nullptr;
 
-	std::shared_ptr<Account> mDependency;
+	std::shared_ptr<Account> mDependency = nullptr;
 
-	std::list<LinphoneAccountCbs *> mCallbacksList;
+	bctbx_list_t *mCallbacksList = nullptr;
 	LinphoneAccountCbs *mCurrentCallbacks = nullptr;
+
+	unsigned long long mPreviousPublishParamsHash[2] = {0};
+	std::shared_ptr<AccountParams> mOldParams;
+
+	// This is a back pointer intended to keep both LinphoneProxyConfig and Account
+	// api to be usable at the same time. This should be removed as soon as 
+	// proxy configs can be replaced.
+	LinphoneProxyConfig *mConfig = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

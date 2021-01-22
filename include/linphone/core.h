@@ -1843,6 +1843,21 @@ LINPHONE_PUBLIC void linphone_core_set_default_proxy_config(LinphoneCore *core, 
  */
 
 /**
+ * Add an account.
+ * This will start registration on the proxy, if registration is enabled.
+ * @param core #LinphoneCore object @notnil
+ * @param account the #LinphoneAccount to add @notnil
+ * @return 0 if successful, -1 otherwise
+**/
+LINPHONE_PUBLIC LinphoneStatus linphone_core_add_account(LinphoneCore *core, LinphoneAccount *account);
+
+/**
+ * Erase all account from config.
+ * @param core #LinphoneCore object @notnil
+**/
+LINPHONE_PUBLIC void linphone_core_clear_account(LinphoneCore *core);
+
+/**
  * Removes an account.
  *
  * #LinphoneCore will then automatically unregister and place the account
@@ -1853,18 +1868,28 @@ LINPHONE_PUBLIC void linphone_core_set_default_proxy_config(LinphoneCore *core, 
 LINPHONE_PUBLIC void linphone_core_remove_account(LinphoneCore *core, LinphoneAccount *account);
 
 /**
- * Returns the default account, that is the one used to determine the current identity.
- * @param core #LinphoneCore object @notnil
- * @return The default account. @maybenil
-**/
-LINPHONE_PUBLIC LinphoneAccount * linphone_core_get_default_account(const LinphoneCore *core);
-
-/**
  * Returns an unmodifiable list of entered accounts.
  * @param core The #LinphoneCore object @notnil
  * @return \bctbx_list{LinphoneAccount} @maybenil
 **/
 LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_account_list(const LinphoneCore *core);
+
+LINPHONE_PUBLIC void linphone_core_set_default_account_index(LinphoneCore *core, int index);
+
+/**
+ * Search for a #LinphoneAccount by it's idkey.
+ * @param core the #LinphoneCore object @notnil
+ * @param idkey An arbitrary idkey string associated to an account
+ * @return the #LinphoneAccount object for the given idkey value, or NULL if none found @maybenil
+ **/
+LINPHONE_PUBLIC LinphoneAccount *linphone_core_get_account_by_idkey(LinphoneCore *core, const char *idkey);
+
+/**
+ * Returns the default account, that is the one used to determine the current identity.
+ * @param core #LinphoneCore object @notnil
+ * @return The default account. @maybenil
+**/
+LINPHONE_PUBLIC LinphoneAccount * linphone_core_get_default_account(const LinphoneCore *core);
 
 /**
  * Sets the default account.
